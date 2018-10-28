@@ -36,13 +36,13 @@ class grid(object):
             dist = abs(self.goal_x - self.ball_x) + abs(self.goal_y - self.ball_y)
         self.bx_initial = self.ball_x
         self.by_initial = self.ball_y
-        print('Ball Initial [X,Y]: ', [self.ball_x, self.ball_y])
-        print('Goal [X,Y]: ', [self.goal_x, self.goal_y])
+        #print('Ball Initial [X,Y]: ', [self.ball_x, self.ball_y])
+        #print('Goal [X,Y]: ', [self.goal_x, self.goal_y])
 
     def reset_ball(self): #Resets ball to initial position
         self.ball_x = self.bx_initial
         self.ball_y = self.by_initial
-        print('Ball Initial [X,Y]: ', [self.ball_x, self.ball_y])
+        #print('Ball Initial [X,Y]: ', [self.ball_x, self.ball_y])
 
     def ball_react(self, action, agent_vec): #Utilized in agent_move function
         ax = agent_vec[0] #Agent X-Position
@@ -64,7 +64,7 @@ class grid(object):
                 self.ball_y -= 1
                 while self.ball_y < 0: #Ball cannot be hit out of grid
                     self.ball_y += 1
-            print('Ball Position: ', [self.ball_x, self.ball_y])
+            #print('Ball Position: ', [self.ball_x, self.ball_y])
 
     def check_for_goal(self): #Check if ball is in goal
         if self.ball_x == self.goal_x and self.ball_y == self.goal_y:
@@ -100,8 +100,8 @@ class agent(object):
                 y = random.randint(0, (gw.y_dim - 1))
             self.agent_position[i] = [x,y]
             self.initial_position[i] = [x,y]
-        print('Agent Initial Position: ', self.agent_position)
-        print(self.initial_position)
+        #print('Agent Initial Position: ', self.agent_position)
+        #print(self.initial_position)
 
     def update_state_vec(self, gw): #gw is a "pointer" to grid class
         """ DEPRECATED """
@@ -113,8 +113,8 @@ class agent(object):
 
     def reset_agents(self): #Resets agents to starting position
         self.agent_position = self.initial_position
-        print('Agent Initial Position: ', self.agent_position)
-        print(self.initial_position)
+        #print('Agent Initial Position: ', self.agent_position)
+        #print(self.initial_position)
 
     def agent_move(self, action, a_number, gw): #a_number identifies which agent is taking an action, gw is "pointer"
         """
@@ -156,7 +156,7 @@ class agent(object):
                 y += 1
         self.agent_position[a_number][0] = x
         self.agent_position[a_number][1] = y
-        print('Agent Position: ', self.agent_position[a_number])
+        #print('Agent Position: ', self.agent_position[a_number])
         gw.ball_react(action, self.agent_position[a_number]) #Check if agent moved ball
 
 class GridBallWorld(object):
@@ -167,6 +167,7 @@ class GridBallWorld(object):
     def __init__(self, x_dim=10, y_dim=10, min_dist=2, reward=100):
         self._world = grid(x_dim, y_dim, min_dist, reward)
         self._agent = agent(self._world)
+        self.timestep = 0
 
     def _get_state(self):
         """ Helper to get the state of the world. """
@@ -187,8 +188,10 @@ class GridBallWorld(object):
         return state
 
     def reset(self):
+        self.timestep = 0
         self._world.reset_ball()
         self._agent.reset_agents()
+        return self._get_state()
 
     def step(self, action):
         """
@@ -206,10 +209,11 @@ class GridBallWorld(object):
             Done: boolean flag
             Info: dict, empty
         """
+        self.timestep += 1
         self._agent.agent_move(action, 0, self._world)
         state = self._get_state()
         reward = self._world.check_for_goal()
-        if reward > 0:
+        if reward > 0 or self.timestep > 50:
             done = True
         else:
             done = False
